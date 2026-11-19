@@ -1,0 +1,2232 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spotifyポッドキャスト動画メーカー（HTML版）</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%231DB954'/%3E%3Cpath d='M18 36v-8m10 16V20m10 22V22m10 11v-7' stroke='%2306180b' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <style>
+    :root {
+      color-scheme: light;
+      --page-bg: #eef2f8;
+      --surface: #ffffff;
+      --surface-raised: #f6f8fc;
+      --text: #182238;
+      --muted: #66738a;
+      --border: #dce3ee;
+      --accent: #1db954;
+      --accent-text: #147a3b;
+      --accent-contrast: #06180b;
+      --accent-soft: #e8f8ee;
+      --drop-hover: #effbf3;
+      --danger: #b42318;
+      --shadow: 0 12px 32px rgb(26 39 68 / 8%);
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --page-bg: #0b1020;
+      --surface: #121a2b;
+      --surface-raised: #182338;
+      --text: #edf2fb;
+      --muted: #9aa8bf;
+      --border: #29364d;
+      --accent: #1ed760;
+      --accent-text: #52e486;
+      --accent-contrast: #06170b;
+      --accent-soft: #173b27;
+      --drop-hover: #122a1c;
+      --danger: #ff8b86;
+      --shadow: 0 16px 38px rgb(0 0 0 / 22%);
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      width: 100%;
+      height: 100vh;
+      min-height: 620px;
+      margin: 0;
+      padding: 14px clamp(14px, 2vw, 28px) 18px;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 14px;
+      overflow: hidden;
+      font-family: Inter, "Yu Gothic UI", "Meiryo", sans-serif;
+      line-height: 1.45;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 85% 0%, rgb(30 215 96 / 10%), transparent 36%),
+        var(--page-bg);
+    }
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 54px;
+      padding: 0 4px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      flex: 0 0 auto;
+      border-radius: 13px;
+      background: linear-gradient(145deg, #1ed760, #1db954);
+      box-shadow: 0 7px 18px rgb(29 185 84 / 24%);
+    }
+    .brand-mark span {
+      width: 3px;
+      border-radius: 99px;
+      background: var(--accent-contrast);
+    }
+    .brand-mark span:nth-child(1) {
+      height: 10px;
+    }
+    .brand-mark span:nth-child(2) {
+      height: 18px;
+    }
+    .brand-mark span:nth-child(3) {
+      height: 25px;
+    }
+    .brand-mark span:nth-child(4) {
+      height: 14px;
+    }
+    .brand-copy {
+      min-width: 0;
+    }
+    .brand-kicker,
+    .preview-kicker {
+      margin: 0;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    .page-header h1 {
+      margin: 0;
+      font-size: clamp(17px, 2vw, 22px);
+      line-height: 1.2;
+    }
+    .theme-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    button,
+    select,
+    input[type="number"] {
+      min-height: 36px;
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      color: var(--text);
+      background: var(--surface-raised);
+      font: inherit;
+    }
+    button {
+      cursor: pointer;
+      transition: border-color .15s ease, background-color .15s ease, transform .15s ease;
+    }
+    button:hover:not(:disabled) {
+      border-color: var(--accent);
+    }
+    button:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+    button:focus-visible,
+    select:focus-visible,
+    input:focus-visible,
+    .drop-zone:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--accent) 35%, transparent);
+      outline-offset: 2px;
+    }
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .58;
+    }
+    select {
+      width: 100%;
+      min-width: 0;
+      cursor: pointer;
+    }
+    .app-layout {
+      display: grid;
+      grid-template-columns: minmax(350px, 410px) minmax(0, 1fr);
+      gap: 14px;
+      min-height: 0;
+    }
+    .control-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      min-height: 0;
+    }
+    .control-card,
+    .preview-panel {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .control-card {
+      flex: 0 0 auto;
+      margin: 0;
+      padding: 10px 12px;
+    }
+    .section-heading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .section-heading h2,
+    .preview-heading h2 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 750;
+    }
+    .optional-label {
+      margin-left: 4px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 500;
+    }
+    .step-number {
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 7px;
+      color: var(--accent-text);
+      background: var(--accent-soft);
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .drop-zone {
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 8px 12px;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      color: var(--muted);
+      background: var(--surface-raised);
+      text-align: left;
+      cursor: pointer;
+      transition: border-color .15s ease, background-color .15s ease;
+    }
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: var(--drop-hover);
+    }
+    .drop-icon {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 9px;
+      color: var(--accent-text);
+      background: var(--accent-soft);
+      font-size: 18px;
+    }
+    .drop-copy {
+      min-width: 0;
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .drop-copy small {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 450;
+    }
+    #selectedAudioText,
+    #statusText,
+    #assetBackupStatus {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+      overflow-wrap: anywhere;
+    }
+    .asset-selection,
+    .bgm-select-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #backgroundPreview {
+      width: 72px;
+      height: 42px;
+      flex: 0 0 auto;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--surface-raised);
+    }
+    .asset-select {
+      flex: 1;
+      min-width: 0;
+    }
+    .background-heading .secondary-button,
+    .bgm-heading .secondary-button {
+      min-height: 30px;
+      margin-left: auto;
+      padding: 4px 8px;
+      font-size: 10px;
+    }
+    .bgm-select-row {
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .bgm-row-label {
+      flex: 0 0 62px;
+      color: var(--muted);
+      font-size: 10px;
+      white-space: nowrap;
+    }
+    .bgm-select-row .icon-button {
+      min-height: 30px;
+      padding: 4px 7px;
+    }
+    .opening-bgm-settings {
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr) 38px 58px;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      white-space: nowrap;
+    }
+    .opening-bgm-settings.has-offset {
+      grid-template-columns: 40px minmax(0, 1fr) 38px 55px 42px 55px;
+    }
+    .opening-bgm-settings select {
+      min-width: 0;
+      min-height: 32px;
+      padding: 5px 6px;
+      font-size: 10px;
+    }
+    .opening-bgm-settings input {
+      width: 100%;
+      min-width: 0;
+      min-height: 32px;
+      padding: 5px;
+      text-align: right;
+    }
+    .ending-timing {
+      gap: 3px;
+      color: var(--muted);
+      font-size: 9px;
+    }
+    .ending-timing input {
+      width: 48px;
+      min-height: 30px;
+      padding: 4px;
+      text-align: right;
+    }
+    .bgm-helper-text {
+      margin-top: 4px;
+      font-size: 9px;
+    }
+    .icon-button,
+    .small-button,
+    .secondary-button {
+      min-height: 34px;
+      padding: 6px 10px;
+      color: var(--text);
+      background: var(--surface-raised);
+      font-size: 11px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+    .asset-actions {
+      display: flex;
+      gap: 7px;
+      margin-top: 7px;
+    }
+    .secondary-button {
+      color: var(--accent-text);
+      border-color: color-mix(in srgb, var(--accent) 32%, var(--border));
+    }
+    .file-picker-button {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--border));
+      border-radius: 9px;
+      cursor: pointer;
+      transition: border-color .15s ease, background-color .15s ease, transform .15s ease;
+    }
+    .file-picker-button:hover {
+      border-color: var(--accent);
+    }
+    .file-picker-button:active {
+      transform: translateY(1px);
+    }
+    .file-picker-button:focus-within {
+      outline: 3px solid color-mix(in srgb, var(--accent) 35%, transparent);
+      outline-offset: 2px;
+    }
+    .file-picker-input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      padding: 0;
+      border: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .timing-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .timing-input {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .timing-input input {
+      width: 70px;
+      min-height: 32px;
+      text-align: right;
+    }
+    .helper-text {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 10px;
+    }
+    .backup-card {
+      margin-top: auto;
+      padding-top: 9px;
+      padding-bottom: 9px;
+    }
+    .backup-heading {
+      margin: 0 0 7px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .backup-actions {
+      display: flex;
+      gap: 7px;
+    }
+    .backup-actions button {
+      flex: 1;
+    }
+    .generate-card {
+      padding: 10px 12px;
+    }
+    .generate-toolbar {
+      display: grid;
+      grid-template-columns: minmax(120px, .8fr) minmax(0, 1.2fr);
+      align-items: end;
+      gap: 8px;
+    }
+    .notification-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .notification-toggle input {
+      width: 14px;
+      height: 14px;
+      margin: 0;
+      accent-color: var(--accent);
+    }
+    .notification-status {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 9px;
+    }
+    .generate-btn {
+      width: 100%;
+      min-height: 42px;
+      border: 0;
+      color: var(--accent-contrast);
+      background: linear-gradient(100deg, #1ed760, #1db954);
+      box-shadow: 0 8px 18px rgb(29 185 84 / 20%);
+      font-size: 14px;
+      font-weight: 750;
+    }
+    .filename-field {
+      display: grid;
+      gap: 3px;
+      min-width: 0;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 650;
+    }
+    .filename-entry {
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 8px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface-raised);
+    }
+    .filename-entry:focus-within {
+      border-color: var(--accent);
+      outline: 3px solid color-mix(in srgb, var(--accent) 35%, transparent);
+      outline-offset: 1px;
+    }
+    .filename-entry.invalid,
+    .filename-entry.invalid:focus-within {
+      border-color: var(--danger);
+    }
+    #outputFilenameInput {
+      width: 100%;
+      min-width: 0;
+      height: 32px;
+      padding: 0;
+      border: 0;
+      outline: 0;
+      color: var(--text);
+      background: transparent;
+      font: inherit;
+      font-size: 11px;
+    }
+    .filename-extension {
+      color: var(--muted);
+      font-size: 10px;
+      user-select: none;
+    }
+    #filenameStatus {
+      margin: 3px 0 0;
+      color: var(--danger);
+      font-size: 9px;
+      font-weight: 500;
+    }
+    .generate-btn:hover:not(:disabled) {
+      border: 0;
+      filter: brightness(1.04);
+    }
+    .generate-btn.cancel-btn {
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      background: var(--surface-raised);
+      box-shadow: none;
+    }
+    .generate-btn.cancel-btn:hover:not(:disabled) {
+      border-color: var(--danger);
+      background: color-mix(in srgb, var(--danger) 10%, var(--surface-raised));
+      filter: none;
+    }
+    #progressArea {
+      margin-top: 7px;
+    }
+    progress {
+      width: 100%;
+      height: 7px;
+      display: block;
+      margin: 0 0 4px;
+      overflow: hidden;
+      border: 0;
+      border-radius: 99px;
+      accent-color: var(--accent);
+    }
+    progress::-webkit-progress-bar {
+      border-radius: 99px;
+      background: var(--surface-raised);
+    }
+    progress::-webkit-progress-value {
+      border-radius: 99px;
+      background: var(--accent);
+    }
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+    #encodingTimeText {
+      text-align: right;
+    }
+    .preview-panel {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+      margin: 0;
+      padding: 14px;
+    }
+    .preview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .preview-kicker {
+      margin-bottom: 3px;
+      font-size: 9px;
+    }
+    .preview-heading h2 {
+      font-size: 17px;
+    }
+    .preview-state {
+      padding: 5px 9px;
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      color: var(--muted);
+      background: var(--surface-raised);
+      font-size: 10px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+    .preview-stage {
+      position: relative;
+      flex: 1;
+      display: grid;
+      place-items: center;
+      min-height: 0;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background:
+        radial-gradient(ellipse at 50% 40%, rgb(30 215 96 / 10%), transparent 52%),
+        var(--surface-raised);
+    }
+    #previewVideo {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      background: #070b14;
+    }
+    .preview-empty {
+      max-width: 320px;
+      padding: 24px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .preview-empty-icon {
+      width: 52px;
+      height: 52px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 12px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      color: var(--accent);
+      background: var(--surface);
+      font-size: 20px;
+      box-shadow: var(--shadow);
+    }
+    .preview-empty strong {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--text);
+      font-size: 14px;
+    }
+    .preview-empty p {
+      margin: 0;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+    .preview-footer {
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-top: 9px;
+    }
+    #previewCompatibilityNotice {
+      margin: 0;
+      color: var(--muted);
+      font-size: 10px;
+      overflow-wrap: anywhere;
+    }
+    .download-link {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      padding: 7px 12px;
+      border-radius: 9px;
+      color: var(--accent-contrast);
+      background: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .download-link:hover {
+      filter: brightness(1.06);
+    }
+    [hidden] {
+      display: none !important;
+    }
+    @media (max-height: 820px) and (min-width: 901px) {
+      body {
+        padding-top: 9px;
+        padding-bottom: 10px;
+        gap: 9px;
+      }
+      .page-header {
+        min-height: 46px;
+      }
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+      }
+      .control-panel {
+        gap: 6px;
+      }
+      .control-card {
+        padding: 6px 10px;
+      }
+      .section-heading {
+        margin-bottom: 5px;
+      }
+      .drop-zone {
+        min-height: 46px;
+      }
+      .generate-card {
+        padding: 7px 10px;
+      }
+      .preview-panel {
+        padding: 11px;
+      }
+    }
+    @media (max-width: 900px) {
+      body {
+        height: auto;
+        min-height: 100vh;
+        overflow: auto;
+      }
+      .app-layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .control-panel {
+        overflow: visible;
+      }
+      .generate-card {
+        margin-top: 0;
+      }
+      .backup-card {
+        margin-top: 0;
+      }
+      .preview-panel {
+        min-height: min(70vh, 620px);
+      }
+    }
+    @media (max-width: 600px) {
+      .page-header {
+        gap: 8px;
+      }
+      .brand-mark {
+        width: 34px;
+        height: 34px;
+      }
+      .theme-control {
+        gap: 5px;
+        font-size: 10px;
+      }
+      .theme-control select {
+        max-width: 118px;
+      }
+      .preview-footer {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+    @media (max-height: 650px) and (min-width: 901px) {
+      body {
+        height: auto;
+        min-height: 100vh;
+        overflow: auto;
+      }
+      .app-layout {
+        min-height: 600px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+      <div class="brand-copy">
+        <p class="brand-kicker">PODCAST VIDEO STUDIO</p>
+        <h1>ふりかえりラジオ動画メーカー</h1>
+      </div>
+    </div>
+    <label class="theme-control">
+      表示テーマ
+      <select id="themeSelect" aria-label="表示テーマ">
+        <option value="system">システム設定</option>
+        <option value="light">ライト</option>
+        <option value="dark">ダーク</option>
+      </select>
+    </label>
+  </header>
+
+  <main class="app-layout">
+    <aside class="control-panel" aria-label="動画の設定">
+      <section class="control-card">
+        <div class="section-heading">
+          <span class="step-number">01</span>
+          <h2>音声ファイル</h2>
+        </div>
+        <div id="audioDropZone" class="drop-zone" role="button" tabindex="0" aria-label="音声ファイルをドロップするかクリックして選択">
+          <span class="drop-icon" aria-hidden="true">↥</span>
+          <span class="drop-copy">音声をドロップ、またはクリックして選択<small>MP3、M4A、WAV など</small></span>
+        </div>
+        <input id="audioInput" type="file" accept="audio/*,.m4a" hidden />
+        <p id="selectedAudioText" aria-live="polite">音声ファイルはまだ選択されていません</p>
+      </section>
+
+      <section class="control-card">
+        <div class="section-heading background-heading">
+          <span class="step-number">02</span>
+          <h2>背景画像</h2>
+          <label id="addBgBtn" class="secondary-button file-picker-button">
+            ＋ 背景を追加
+            <input id="bgInput" class="file-picker-input" type="file" accept="image/*" multiple aria-label="追加する背景画像を選択" />
+          </label>
+        </div>
+        <div class="asset-selection">
+          <img id="backgroundPreview" alt="" />
+          <select id="bgList" class="asset-select" aria-label="背景画像を選択"></select>
+          <button id="removeBackgroundBtn" class="icon-button" type="button" aria-label="選択中の背景画像を削除">削除</button>
+        </div>
+      </section>
+
+      <section class="control-card">
+        <div class="section-heading bgm-heading">
+          <span class="step-number">03</span>
+          <h2>BGM設定 <span class="optional-label">任意</span></h2>
+          <label id="addBgmBtn" class="secondary-button file-picker-button">
+            ＋ BGMを追加
+            <input id="bgmInput" class="file-picker-input" type="file" accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg" multiple aria-label="追加するBGM素材を選択" />
+          </label>
+        </div>
+        <div class="bgm-select-row">
+          <label class="bgm-row-label" for="openingBgmList">オープニング</label>
+          <select id="openingBgmList" aria-label="オープニングBGMを選択"></select>
+          <button id="removeOpeningBgmBtn" class="icon-button" type="button" aria-label="選択中のオープニングBGMを削除">削除</button>
+        </div>
+        <div id="openingBgmSettings" class="opening-bgm-settings" hidden>
+          <label for="openingBgmMode">開始位置</label>
+          <select id="openingBgmMode" aria-label="オープニングBGMの開始位置">
+            <option value="overlay">音声と同時に重ねる</option>
+            <option value="beforeOverlap">BGM先行で重ねる</option>
+            <option value="afterOverlap">音声開始後に重ねる</option>
+            <option value="beforeVoice">BGM後に音声を開始</option>
+          </select>
+          <label for="openingBgmDurationInput">再生秒</label>
+          <input id="openingBgmDurationInput" type="number" min="0" step="0.1" value="0" aria-label="オープニングBGMの再生秒数。0は素材全体" aria-describedby="openingBgmHelp" />
+          <label id="openingBgmOffsetLabel" for="openingBgmOffsetInput" hidden>先行秒</label>
+          <input id="openingBgmOffsetInput" type="number" min="0" step="0.1" value="2" aria-label="音声とオープニングBGMの開始時間差（秒）" hidden />
+        </div>
+        <div class="bgm-select-row">
+          <label class="bgm-row-label" for="bgmList">エンディング</label>
+          <select id="bgmList" class="asset-select" aria-label="エンディングBGMを選択"></select>
+          <span id="bgmTimingRow" class="timing-input ending-timing" hidden>
+            <span>重ね</span>
+            <input id="bgmOverlapInput" type="number" min="0" step="0.1" aria-label="エンディングBGMを音声終了の何秒前から重ねるか" />
+            <span>秒前</span>
+          </span>
+          <button id="removeBgmBtn" class="icon-button" type="button" aria-label="選択中のエンディングBGMを削除">削除</button>
+        </div>
+        <p id="openingBgmHelp" class="helper-text bgm-helper-text">再生秒数0は素材全体、長い指定はループ。背景はBGM終了まで表示されます。</p>
+      </section>
+
+      <section class="control-card generate-card">
+        <div class="generate-toolbar">
+          <button id="generateBtn" class="generate-btn" type="button" disabled>動画を生成</button>
+          <label class="filename-field">
+            保存名（生成中も編集可）
+            <span class="filename-entry">
+              <input id="outputFilenameInput" type="text" maxlength="100" placeholder="【エピソード名】" aria-label="ダウンロード用ファイル名" aria-describedby="filenameStatus" />
+              <span class="filename-extension">.mp4</span>
+            </span>
+          </label>
+        </div>
+        <label class="notification-toggle">
+          <input id="completionNotificationToggle" type="checkbox" />
+          エンコード完了時に通知
+        </label>
+        <p id="completionNotificationStatus" class="notification-status" role="status" aria-live="polite"></p>
+        <p id="filenameStatus" role="status" aria-live="polite" hidden></p>
+        <div id="progressArea" style="display: none;">
+          <progress id="progressBar" value="0" max="100"></progress>
+          <div class="progress-meta">
+            <span id="progressText">0%</span>
+            <span id="encodingTimeText" aria-live="polite"></span>
+          </div>
+        </div>
+        <p id="statusText" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="control-card backup-card">
+        <h2 class="backup-heading">素材設定を別のブラウザーへ移行</h2>
+        <div class="backup-actions">
+          <button id="exportAssetsBtn" class="small-button" type="button">設定を書き出す</button>
+          <button id="importAssetsBtn" class="small-button" type="button">設定を読み込む</button>
+        </div>
+        <input id="assetBackupInput" type="file" accept=".json,application/json" hidden />
+        <p id="assetBackupStatus" role="status" aria-live="polite"></p>
+      </section>
+    </aside>
+
+    <section id="resultArea" class="preview-panel" aria-label="動画プレビュー">
+      <div class="preview-header">
+        <div class="preview-heading">
+          <p class="preview-kicker">OUTPUT PREVIEW</p>
+          <h2>プレビュー</h2>
+        </div>
+        <span id="previewState" class="preview-state">動画未生成</span>
+      </div>
+      <div class="preview-stage">
+        <div id="previewEmpty" class="preview-empty">
+          <span class="preview-empty-icon" aria-hidden="true">▶</span>
+          <strong id="previewEmptyTitle">動画をここで確認</strong>
+          <p id="previewEmptyText">左側で音声と素材を選び、「動画を生成」を押してください。</p>
+        </div>
+        <video id="previewVideo" controls hidden></video>
+      </div>
+      <div class="preview-footer">
+        <p id="previewCompatibilityNotice" hidden></p>
+        <a id="downloadLink" class="download-link" download="podcast_episode.mp4" hidden>MP4をダウンロード</a>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { FFmpeg } from "https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js";
+    import { fetchFile, toBlobURL } from "https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js";
+
+    const ASSET_DB_NAME = "podcast-video-maker";
+    const ASSET_STORE_NAME = "assets";
+    const OPENING_BGM_MODES = ["overlay", "beforeOverlap", "afterOverlap", "beforeVoice"];
+    const FFMPEG_WORKER_URL = "https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/worker.js";
+
+    function createBackgroundSvg(startColor, endColor, accentColor) {
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+          <defs>
+            <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="${startColor}" />
+              <stop offset="100%" stop-color="${endColor}" />
+            </linearGradient>
+          </defs>
+          <rect width="1280" height="720" fill="url(#background)" />
+          <circle cx="1020" cy="170" r="220" fill="${accentColor}" opacity=".18" />
+          <circle cx="250" cy="660" r="300" fill="${accentColor}" opacity=".12" />
+        </svg>`;
+      return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    }
+
+    const backgroundPresets = [
+      { id: "bg1", label: "プリセット 1", src: createBackgroundSvg("#102a43", "#243b53", "#8fd3f4") },
+      { id: "bg2", label: "プリセット 2", src: createBackgroundSvg("#42275a", "#734b6d", "#f7b7a3") },
+      { id: "bg3", label: "プリセット 3", src: createBackgroundSvg("#134e5e", "#71b280", "#d9ed92") },
+    ];
+    const bgmPresets = [];
+    let selectedBgId = localStorage.getItem("selectedBackgroundId") || "bg1";
+    let selectedBgmId = localStorage.getItem("selectedBgmId") || "";
+    let selectedOpeningBgmId = localStorage.getItem("selectedOpeningBgmId") || "";
+    let openingBgmMode = localStorage.getItem("openingBgmMode") || "overlay";
+    if (!OPENING_BGM_MODES.includes(openingBgmMode)) openingBgmMode = "overlay";
+    let audioFile = null;
+    let ffmpeg = null;
+    let isLoaded = false;
+    let isGenerating = false;
+    let isCancelling = false;
+    let cancelRequested = false;
+    let isPreparingPreviewAudio = false;
+    let outputUrl = null;
+    let previewCompatibilityUrl = null;
+    let suggestedOutputFilename = "";
+
+    const audioInput = document.getElementById("audioInput");
+    const audioDropZone = document.getElementById("audioDropZone");
+    const selectedAudioText = document.getElementById("selectedAudioText");
+    const bgInput = document.getElementById("bgInput");
+    const bgList = document.getElementById("bgList");
+    const backgroundPreview = document.getElementById("backgroundPreview");
+    const removeBackgroundBtn = document.getElementById("removeBackgroundBtn");
+    const bgmInput = document.getElementById("bgmInput");
+    const bgmList = document.getElementById("bgmList");
+    const openingBgmList = document.getElementById("openingBgmList");
+    const openingBgmSettings = document.getElementById("openingBgmSettings");
+    const openingBgmModeSelect = document.getElementById("openingBgmMode");
+    const openingBgmDurationInput = document.getElementById("openingBgmDurationInput");
+    const openingBgmOffsetLabel = document.getElementById("openingBgmOffsetLabel");
+    const openingBgmOffsetInput = document.getElementById("openingBgmOffsetInput");
+    const bgmTimingRow = document.getElementById("bgmTimingRow");
+    const bgmOverlapInput = document.getElementById("bgmOverlapInput");
+    const removeBgmBtn = document.getElementById("removeBgmBtn");
+    const removeOpeningBgmBtn = document.getElementById("removeOpeningBgmBtn");
+    const generateBtn = document.getElementById("generateBtn");
+    const completionNotificationToggle = document.getElementById("completionNotificationToggle");
+    const completionNotificationStatus = document.getElementById("completionNotificationStatus");
+    const progressArea = document.getElementById("progressArea");
+    const progressBar = document.getElementById("progressBar");
+    const progressText = document.getElementById("progressText");
+    const statusText = document.getElementById("statusText");
+    const previewEmpty = document.getElementById("previewEmpty");
+    const previewEmptyTitle = document.getElementById("previewEmptyTitle");
+    const previewEmptyText = document.getElementById("previewEmptyText");
+    const previewState = document.getElementById("previewState");
+    const previewVideo = document.getElementById("previewVideo");
+    const downloadLink = document.getElementById("downloadLink");
+    const outputFilenameInput = document.getElementById("outputFilenameInput");
+    const filenameInputWrap = outputFilenameInput.parentElement;
+    const filenameStatus = document.getElementById("filenameStatus");
+    const previewCompatibilityNotice = document.getElementById("previewCompatibilityNotice");
+    const assetBackupStatus = document.getElementById("assetBackupStatus");
+    const themeSelect = document.getElementById("themeSelect");
+    const encodingTimeText = document.getElementById("encodingTimeText");
+
+    const completionNotificationStorageKey = "completionNotificationEnabled";
+    let completionNotificationEnabled = localStorage.getItem(completionNotificationStorageKey) === "true";
+    let assetDbPromise;
+    let generationStartedAt = null;
+    let encodingStartedAt = null;
+    let encodingProgress = 0;
+    let encodingTimerId = null;
+
+    function initializeCompletionNotification() {
+      const notificationApi = window.Notification;
+      if (!window.isSecureContext || !notificationApi) {
+        completionNotificationToggle.disabled = true;
+        completionNotificationToggle.checked = false;
+        completionNotificationEnabled = false;
+        localStorage.removeItem(completionNotificationStorageKey);
+        completionNotificationStatus.textContent = "このブラウザーでは完了通知を利用できません。";
+        return;
+      }
+
+      if (completionNotificationEnabled && notificationApi.permission !== "granted") {
+        completionNotificationEnabled = false;
+        localStorage.removeItem(completionNotificationStorageKey);
+      }
+      completionNotificationToggle.checked = completionNotificationEnabled;
+      completionNotificationStatus.textContent = completionNotificationEnabled
+        ? "エンコード完了時の通知は有効です。"
+        : notificationApi.permission === "denied"
+          ? "通知がブロックされています。ブラウザーのサイト設定をご確認ください。"
+          : "チェックするとブラウザーの通知許可を確認します。";
+    }
+
+    completionNotificationToggle.addEventListener("change", async () => {
+      if (!completionNotificationToggle.checked) {
+        completionNotificationEnabled = false;
+        localStorage.removeItem(completionNotificationStorageKey);
+        completionNotificationStatus.textContent = "エンコード完了時の通知をオフにしました。";
+        return;
+      }
+
+      const notificationApi = window.Notification;
+      if (!window.isSecureContext || !notificationApi) {
+        completionNotificationEnabled = false;
+        completionNotificationToggle.checked = false;
+        completionNotificationStatus.textContent = "このブラウザーでは完了通知を利用できません。";
+        return;
+      }
+
+      try {
+        const permission = notificationApi.permission === "default"
+          ? await notificationApi.requestPermission()
+          : notificationApi.permission;
+        if (permission !== "granted") {
+          completionNotificationEnabled = false;
+          completionNotificationToggle.checked = false;
+          localStorage.removeItem(completionNotificationStorageKey);
+          completionNotificationStatus.textContent = permission === "denied"
+            ? "通知が拒否されました。ブラウザーのサイト設定から許可してください。"
+            : "通知の許可を確認できませんでした。";
+          return;
+        }
+
+        completionNotificationEnabled = true;
+        localStorage.setItem(completionNotificationStorageKey, "true");
+        completionNotificationStatus.textContent = "エンコード完了時にブラウザー通知を表示します。";
+      } catch (err) {
+        console.error("完了通知の許可を取得できませんでした。", err);
+        completionNotificationEnabled = false;
+        completionNotificationToggle.checked = false;
+        localStorage.removeItem(completionNotificationStorageKey);
+        completionNotificationStatus.textContent = "通知の許可を取得できませんでした。ブラウザー設定をご確認ください。";
+      }
+    });
+
+    initializeCompletionNotification();
+
+    let themePreference = localStorage.getItem("themePreference") || "system";
+    if (!["system", "light", "dark"].includes(themePreference)) themePreference = "system";
+    function applyTheme(preference) {
+      const theme = preference === "system"
+        ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+        : preference;
+      document.documentElement.dataset.theme = theme;
+      themeSelect.value = preference;
+    }
+    applyTheme(themePreference);
+    themeSelect.addEventListener("change", () => {
+      themePreference = themeSelect.value;
+      localStorage.setItem("themePreference", themePreference);
+      applyTheme(themePreference);
+    });
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+      if (themePreference === "system") applyTheme("system");
+    });
+
+    function formatDuration(seconds) {
+      const total = Math.max(0, Math.floor(seconds));
+      const hours = Math.floor(total / 3600);
+      const minutes = Math.floor((total % 3600) / 60);
+      const remainder = total % 60;
+      return hours > 0
+        ? `${hours}:${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`
+        : `${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
+    }
+
+    function updateEncodingTime() {
+      if (generationStartedAt === null) return;
+      const now = performance.now();
+      const elapsed = (now - generationStartedAt) / 1000;
+      if (encodingStartedAt !== null && encodingProgress > 0 && encodingProgress < 1) {
+        const encodingElapsed = (now - encodingStartedAt) / 1000;
+        const remaining = encodingElapsed * (1 - encodingProgress) / encodingProgress;
+        encodingTimeText.textContent = `経過 ${formatDuration(elapsed)} / 残り 約${formatDuration(remaining)}`;
+      } else if (encodingProgress >= 1) {
+        encodingTimeText.textContent = `経過 ${formatDuration(elapsed)} / 残り まもなく完了`;
+      } else {
+        encodingTimeText.textContent = `経過 ${formatDuration(elapsed)} / 残り時間を計算中...`;
+      }
+    }
+
+    function startEncodingTimer() {
+      generationStartedAt = performance.now();
+      encodingStartedAt = null;
+      encodingProgress = 0;
+      updateEncodingTime();
+      encodingTimerId = window.setInterval(updateEncodingTime, 1000);
+    }
+
+    function startEncodingProgress() {
+      encodingStartedAt = performance.now();
+      encodingProgress = 0;
+      updateEncodingTime();
+    }
+
+    function stopEncodingTimer(completed, canceled = false) {
+      if (generationStartedAt === null) return;
+      const timerStart = encodingStartedAt ?? generationStartedAt;
+      const elapsed = (performance.now() - timerStart) / 1000;
+      window.clearInterval(encodingTimerId);
+      encodingTimerId = null;
+      generationStartedAt = null;
+      encodingStartedAt = null;
+      const label = completed ? "エンコード時間" : canceled ? "キャンセルまで" : "中断まで";
+      encodingTimeText.textContent = `${label}: ${formatDuration(elapsed)}`;
+    }
+
+    function openAssetDb() {
+      if (!assetDbPromise) {
+        assetDbPromise = new Promise((resolve, reject) => {
+          const request = indexedDB.open(ASSET_DB_NAME, 1);
+          request.onupgradeneeded = () => {
+            request.result.createObjectStore(ASSET_STORE_NAME, { keyPath: "id" });
+          };
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error || new Error("素材データベースを開けませんでした。"));
+        });
+      }
+      return assetDbPromise;
+    }
+
+    async function getStoredAssets() {
+      const db = await openAssetDb();
+      return new Promise((resolve, reject) => {
+        const request = db.transaction(ASSET_STORE_NAME, "readonly")
+          .objectStore(ASSET_STORE_NAME)
+          .getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error || new Error("保存済み素材を読み込めませんでした。"));
+      });
+    }
+
+    async function storeAssets(assets) {
+      const db = await openAssetDb();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(ASSET_STORE_NAME, "readwrite");
+        const store = transaction.objectStore(ASSET_STORE_NAME);
+        for (const asset of assets) store.put(asset);
+        transaction.oncomplete = resolve;
+        transaction.onerror = () => reject(transaction.error || new Error("素材を保存できませんでした。"));
+        transaction.onabort = () => reject(transaction.error || new Error("素材の保存が中断されました。"));
+      });
+    }
+
+    async function storeAsset(asset) {
+      return storeAssets([asset]);
+    }
+
+    async function deleteStoredAsset(id) {
+      const db = await openAssetDb();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(ASSET_STORE_NAME, "readwrite");
+        transaction.objectStore(ASSET_STORE_NAME).delete(id);
+        transaction.oncomplete = resolve;
+        transaction.onerror = () => reject(transaction.error || new Error("素材を削除できませんでした。"));
+        transaction.onabort = () => reject(transaction.error || new Error("素材の削除が中断されました。"));
+      });
+    }
+
+    async function blobToBase64(blob) {
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      let binary = "";
+      const chunkSize = 0x8000;
+      for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+      }
+      return btoa(binary);
+    }
+
+    function base64ToBlob(data, type) {
+      if (typeof data !== "string" || data.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(data)) {
+        throw new Error("バックアップ内の素材データが正しい形式ではありません。");
+      }
+      const binary = atob(data);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index++) bytes[index] = binary.charCodeAt(index);
+      return new Blob([bytes], { type });
+    }
+
+    async function exportAssetBackup() {
+      const assets = (await getStoredAssets()).filter((asset) =>
+        asset.kind === "background" || asset.kind === "bgm");
+      const backup = {
+        format: "podcast-video-maker-assets",
+        version: 1,
+        settings: {
+          selectedBackgroundId: selectedBgId,
+          selectedBgmId,
+          selectedOpeningBgmId,
+          openingBgmMode,
+        },
+        assets: await Promise.all(assets.map(async (asset) => ({
+          id: asset.id,
+          kind: asset.kind,
+          label: asset.label,
+          type: asset.blob.type || "application/octet-stream",
+          overlapSeconds: asset.kind === "bgm" ? asset.overlapSeconds ?? 5 : undefined,
+          openingDurationSeconds: asset.kind === "bgm" ? asset.openingDurationSeconds ?? 0 : undefined,
+          openingOffsetSeconds: asset.kind === "bgm" ? asset.openingOffsetSeconds ?? 2 : undefined,
+          createdAt: asset.createdAt || Date.now(),
+          data: await blobToBase64(asset.blob),
+        }))),
+      };
+      const file = new Blob([JSON.stringify(backup)], { type: "application/json" });
+      const url = URL.createObjectURL(file);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "podcast-video-assets.json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+      assetBackupStatus.textContent = `${assets.length}件の素材設定をエクスポートしました。`;
+    }
+
+    async function importAssetBackup(file) {
+      const backup = JSON.parse(await file.text());
+      if (backup?.format !== "podcast-video-maker-assets" || backup.version !== 1 || !Array.isArray(backup.assets)) {
+        throw new Error("このバックアップ形式には対応していません。");
+      }
+      if (backup.settings !== undefined &&
+          (!backup.settings || typeof backup.settings !== "object" || Array.isArray(backup.settings))) {
+        throw new Error("バックアップの選択設定が正しくありません。");
+      }
+      const settings = backup.settings || {};
+      if ((settings.selectedBackgroundId !== undefined && typeof settings.selectedBackgroundId !== "string") ||
+          (settings.selectedBgmId !== undefined && typeof settings.selectedBgmId !== "string") ||
+          (settings.selectedOpeningBgmId !== undefined && typeof settings.selectedOpeningBgmId !== "string") ||
+          (settings.openingBgmMode !== undefined && !OPENING_BGM_MODES.includes(settings.openingBgmMode))) {
+        throw new Error("バックアップの選択設定が正しくありません。");
+      }
+      const storedAssets = [];
+      const idMap = new Map();
+      const idKindMap = new Map();
+      const incomingIds = new Set();
+      for (const entry of backup.assets) {
+        if (!entry || !["background", "bgm"].includes(entry.kind) ||
+            typeof entry.id !== "string" || !entry.id ||
+            typeof entry.label !== "string" || !entry.label ||
+            typeof entry.type !== "string") {
+          throw new Error("バックアップ内に正しくない素材情報があります。");
+        }
+        if (incomingIds.has(entry.id)) throw new Error("バックアップ内に重複した素材IDがあります。");
+        incomingIds.add(entry.id);
+        if (typeof entry.data !== "string" || !entry.data) {
+          throw new Error(`${entry.label}の素材データが空です。`);
+        }
+        const blob = base64ToBlob(entry.data, entry.type);
+        if (entry.kind === "background") {
+          await validateImage(blob);
+        } else {
+          const supportedAudio = blob.type.startsWith("audio/") ||
+            /\.(m4a|mp3|wav|aac|ogg|flac)$/i.test(entry.label);
+          if (!supportedAudio) throw new Error(`${entry.label}は対応していない音声形式です。`);
+          if (entry.overlapSeconds !== undefined &&
+              (!Number.isFinite(entry.overlapSeconds) || entry.overlapSeconds < 0)) {
+            throw new Error(`${entry.label}の重ねる秒数が正しくありません。`);
+          }
+          if (entry.openingDurationSeconds !== undefined &&
+              (!Number.isFinite(entry.openingDurationSeconds) || entry.openingDurationSeconds < 0)) {
+            throw new Error(`${entry.label}のオープニング再生秒数が正しくありません。`);
+          }
+          if (entry.openingOffsetSeconds !== undefined &&
+              (!Number.isFinite(entry.openingOffsetSeconds) || entry.openingOffsetSeconds < 0)) {
+            throw new Error(`${entry.label}のオープニング開始時間差が正しくありません。`);
+          }
+        }
+        const id = `${entry.kind}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        idMap.set(entry.id, id);
+        idKindMap.set(entry.id, entry.kind);
+        storedAssets.push({
+          id,
+          kind: entry.kind,
+          label: entry.label,
+          blob,
+          createdAt: Number.isFinite(entry.createdAt) ? entry.createdAt : Date.now(),
+          overlapSeconds: entry.kind === "bgm" ? entry.overlapSeconds ?? 5 : undefined,
+          openingDurationSeconds: entry.kind === "bgm" ? entry.openingDurationSeconds ?? 0 : undefined,
+          openingOffsetSeconds: entry.kind === "bgm" ? entry.openingOffsetSeconds ?? 2 : undefined,
+        });
+      }
+      if (typeof settings.selectedBackgroundId === "string" &&
+          !["bg1", "bg2", "bg3"].includes(settings.selectedBackgroundId) &&
+          idKindMap.get(settings.selectedBackgroundId) !== "background") {
+        throw new Error("バックアップの選択背景が素材一覧にありません。");
+      }
+      if (typeof settings.selectedBgmId === "string" && settings.selectedBgmId !== "" &&
+          idKindMap.get(settings.selectedBgmId) !== "bgm") {
+        throw new Error("バックアップの選択BGMが素材一覧にありません。");
+      }
+      if (typeof settings.selectedOpeningBgmId === "string" && settings.selectedOpeningBgmId !== "" &&
+          idKindMap.get(settings.selectedOpeningBgmId) !== "bgm") {
+        throw new Error("バックアップの選択オープニングBGMが素材一覧にありません。");
+      }
+
+      await storeAssets(storedAssets);
+      for (const asset of storedAssets) {
+        asset.custom = true;
+        if (asset.kind === "background") {
+          asset.src = URL.createObjectURL(asset.blob);
+          backgroundPresets.push(asset);
+        } else {
+          bgmPresets.push(asset);
+        }
+      }
+      backgroundPresets.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+      bgmPresets.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+
+      if (typeof settings.selectedBackgroundId === "string") {
+        selectedBgId = idMap.get(settings.selectedBackgroundId) ||
+          (backgroundPresets.some((asset) => asset.id === settings.selectedBackgroundId)
+            ? settings.selectedBackgroundId
+            : selectedBgId);
+        localStorage.setItem("selectedBackgroundId", selectedBgId);
+      }
+      if (typeof settings.selectedBgmId === "string") {
+        selectedBgmId = settings.selectedBgmId === ""
+          ? ""
+          : idMap.get(settings.selectedBgmId) ||
+            (bgmPresets.some((asset) => asset.id === settings.selectedBgmId)
+              ? settings.selectedBgmId
+              : selectedBgmId);
+        localStorage.setItem("selectedBgmId", selectedBgmId);
+      }
+      if (typeof settings.selectedOpeningBgmId === "string") {
+        selectedOpeningBgmId = settings.selectedOpeningBgmId === ""
+          ? ""
+          : idMap.get(settings.selectedOpeningBgmId) ||
+            (bgmPresets.some((asset) => asset.id === settings.selectedOpeningBgmId)
+              ? settings.selectedOpeningBgmId
+              : selectedOpeningBgmId);
+        localStorage.setItem("selectedOpeningBgmId", selectedOpeningBgmId);
+      }
+      if (typeof settings.openingBgmMode === "string") {
+        openingBgmMode = settings.openingBgmMode;
+        localStorage.setItem("openingBgmMode", openingBgmMode);
+      }
+      renderBackgrounds();
+      renderBgms();
+      assetBackupStatus.textContent = `${storedAssets.length}件の素材をインポートしました。既存の素材は削除されていません。`;
+    }
+
+    function clearPreviewFallback() {
+      if (previewCompatibilityUrl) URL.revokeObjectURL(previewCompatibilityUrl);
+      previewCompatibilityUrl = null;
+      previewCompatibilityNotice.hidden = true;
+      previewVideo.muted = false;
+    }
+
+    function showPreviewPlaceholder(title, message, state) {
+      previewVideo.hidden = true;
+      previewEmpty.hidden = false;
+      previewEmptyTitle.textContent = title;
+      previewEmptyText.textContent = message;
+      previewState.textContent = state;
+      downloadLink.hidden = true;
+      previewCompatibilityNotice.hidden = true;
+    }
+
+    function renderBackgrounds() {
+      bgList.replaceChildren();
+      for (const bg of backgroundPresets) {
+        const option = document.createElement("option");
+        option.value = bg.id;
+        option.textContent = bg.custom ? `${bg.label}（追加）` : bg.label;
+        bgList.appendChild(option);
+      }
+      bgList.value = selectedBgId;
+      const selected = backgroundPresets.find((bg) => bg.id === selectedBgId);
+      backgroundPreview.src = selected?.src || "";
+      backgroundPreview.alt = selected ? `${selected.label}のプレビュー` : "";
+      removeBackgroundBtn.hidden = !selected?.custom;
+    }
+
+    function renderBgms() {
+      const choices = [{ id: "", label: "BGMなし" }, ...bgmPresets];
+      for (const list of [openingBgmList, bgmList]) {
+        list.replaceChildren();
+        for (const bgm of choices) {
+          const option = document.createElement("option");
+          option.value = bgm.id;
+          option.textContent = bgm.custom ? `${bgm.label}（追加）` : bgm.label;
+          list.appendChild(option);
+        }
+      }
+      openingBgmList.value = selectedOpeningBgmId;
+      bgmList.value = selectedBgmId;
+      const selectedOpening = bgmPresets.find((bgm) => bgm.id === selectedOpeningBgmId);
+      const selected = bgmPresets.find((bgm) => bgm.id === selectedBgmId);
+      openingBgmSettings.hidden = !selectedOpening;
+      openingBgmModeSelect.value = openingBgmMode;
+      const needsOpeningOffset = openingBgmMode === "beforeOverlap" || openingBgmMode === "afterOverlap";
+      openingBgmSettings.classList.toggle("has-offset", needsOpeningOffset);
+      openingBgmOffsetLabel.hidden = !needsOpeningOffset;
+      openingBgmOffsetInput.hidden = !needsOpeningOffset;
+      openingBgmOffsetLabel.textContent = openingBgmMode === "beforeOverlap" ? "先行秒" : "開始後秒";
+      openingBgmOffsetInput.value = String(selectedOpening?.openingOffsetSeconds ?? 2);
+      openingBgmOffsetInput.setAttribute(
+        "aria-label",
+        openingBgmMode === "beforeOverlap"
+          ? "オープニングBGMを音声より何秒先行して開始するか"
+          : "音声開始後、何秒後にオープニングBGMを開始するか",
+      );
+      openingBgmDurationInput.value = String(selectedOpening?.openingDurationSeconds ?? 0);
+      openingBgmDurationInput.setAttribute(
+        "aria-label",
+        selectedOpening ? `${selectedOpening.label}のオープニングBGM再生秒数。0は素材全体` : "オープニングBGMの再生秒数。0は素材全体",
+      );
+      removeOpeningBgmBtn.hidden = !selectedOpening?.custom;
+      bgmTimingRow.hidden = !selected;
+      bgmOverlapInput.value = String(selected?.overlapSeconds ?? 5);
+      bgmOverlapInput.setAttribute(
+        "aria-label",
+        selected ? `${selected.label}を音声終了の何秒前から重ねるか` : "BGMを音声終了の何秒前から重ねるか",
+      );
+      removeBgmBtn.hidden = !selected;
+    }
+
+    bgList.addEventListener("change", () => {
+      selectedBgId = bgList.value;
+      localStorage.setItem("selectedBackgroundId", selectedBgId);
+      renderBackgrounds();
+    });
+
+    removeBackgroundBtn.addEventListener("click", async () => {
+      const selected = backgroundPresets.find((bg) => bg.id === selectedBgId);
+      if (!selected?.custom) return;
+      try {
+        await deleteStoredAsset(selected.id);
+        URL.revokeObjectURL(selected.src);
+        backgroundPresets.splice(backgroundPresets.indexOf(selected), 1);
+        selectedBgId = "bg1";
+        localStorage.setItem("selectedBackgroundId", selectedBgId);
+        renderBackgrounds();
+      } catch (err) {
+        console.error(err);
+        statusText.textContent = "背景画像を削除できませんでした。";
+      }
+    });
+
+    bgmList.addEventListener("change", () => {
+      selectedBgmId = bgmList.value;
+      localStorage.setItem("selectedBgmId", selectedBgmId);
+      renderBgms();
+    });
+
+    openingBgmList.addEventListener("change", () => {
+      selectedOpeningBgmId = openingBgmList.value;
+      localStorage.setItem("selectedOpeningBgmId", selectedOpeningBgmId);
+      renderBgms();
+    });
+
+    openingBgmModeSelect.addEventListener("change", () => {
+      openingBgmMode = openingBgmModeSelect.value;
+      localStorage.setItem("openingBgmMode", openingBgmMode);
+      renderBgms();
+    });
+
+    openingBgmDurationInput.addEventListener("change", async () => {
+      const selected = bgmPresets.find((bgm) => bgm.id === selectedOpeningBgmId);
+      if (!selected) return;
+      const value = openingBgmDurationInput.valueAsNumber;
+      if (!Number.isFinite(value) || value < 0) {
+        openingBgmDurationInput.value = String(selected.openingDurationSeconds ?? 0);
+        statusText.textContent = "オープニングBGMの再生秒数は0以上の数値を入力してください。";
+        return;
+      }
+      const previousValue = selected.openingDurationSeconds ?? 0;
+      selected.openingDurationSeconds = value;
+      try {
+        await storeAsset(selected);
+        statusText.textContent = `${selected.label}のオープニング再生秒数を保存しました。`;
+      } catch (err) {
+        console.error(err);
+        selected.openingDurationSeconds = previousValue;
+        openingBgmDurationInput.value = String(previousValue);
+        statusText.textContent = "オープニングBGMの再生秒数を保存できませんでした。";
+      }
+    });
+
+    openingBgmOffsetInput.addEventListener("change", async () => {
+      const selected = bgmPresets.find((bgm) => bgm.id === selectedOpeningBgmId);
+      if (!selected) return;
+      const value = openingBgmOffsetInput.valueAsNumber;
+      if (!Number.isFinite(value) || value < 0) {
+        openingBgmOffsetInput.value = String(selected.openingOffsetSeconds ?? 2);
+        statusText.textContent = "オープニングBGMの開始時間差は0以上の数値を入力してください。";
+        return;
+      }
+      const previousValue = selected.openingOffsetSeconds ?? 2;
+      selected.openingOffsetSeconds = value;
+      try {
+        await storeAsset(selected);
+        statusText.textContent = `${selected.label}のオープニング開始時間差を保存しました。`;
+      } catch (err) {
+        console.error(err);
+        selected.openingOffsetSeconds = previousValue;
+        openingBgmOffsetInput.value = String(previousValue);
+        statusText.textContent = "オープニングBGMの開始時間差を保存できませんでした。";
+      }
+    });
+
+    bgmOverlapInput.addEventListener("change", async () => {
+      const selected = bgmPresets.find((bgm) => bgm.id === selectedBgmId);
+      if (!selected) return;
+      const value = bgmOverlapInput.valueAsNumber;
+      if (!Number.isFinite(value) || value < 0) {
+        bgmOverlapInput.value = String(selected.overlapSeconds ?? 5);
+        statusText.textContent = "重ねる秒数は0以上の数値を入力してください。";
+        return;
+      }
+      const previousValue = selected.overlapSeconds;
+      selected.overlapSeconds = value;
+      try {
+        await storeAsset(selected);
+        statusText.textContent = `${selected.label}の開始タイミングを保存しました。`;
+      } catch (err) {
+        console.error(err);
+        selected.overlapSeconds = previousValue;
+        bgmOverlapInput.value = String(previousValue);
+        statusText.textContent = "BGMの開始タイミングを保存できませんでした。";
+      }
+    });
+
+    removeOpeningBgmBtn.addEventListener("click", async () => {
+      const selected = bgmPresets.find((bgm) => bgm.id === selectedOpeningBgmId);
+      if (!selected?.custom) return;
+      try {
+        await deleteStoredAsset(selected.id);
+        bgmPresets.splice(bgmPresets.indexOf(selected), 1);
+        if (selectedBgmId === selected.id) {
+          selectedBgmId = "";
+          localStorage.setItem("selectedBgmId", selectedBgmId);
+        }
+        selectedOpeningBgmId = "";
+        localStorage.setItem("selectedOpeningBgmId", selectedOpeningBgmId);
+        renderBgms();
+      } catch (err) {
+        console.error(err);
+        statusText.textContent = "オープニングBGMを削除できませんでした。";
+      }
+    });
+
+    removeBgmBtn.addEventListener("click", async () => {
+      const selected = bgmPresets.find((bgm) => bgm.id === selectedBgmId);
+      if (!selected) return;
+      try {
+        await deleteStoredAsset(selected.id);
+        bgmPresets.splice(bgmPresets.indexOf(selected), 1);
+        if (selectedOpeningBgmId === selected.id) {
+          selectedOpeningBgmId = "";
+          localStorage.setItem("selectedOpeningBgmId", selectedOpeningBgmId);
+        }
+        selectedBgmId = "";
+        localStorage.setItem("selectedBgmId", selectedBgmId);
+        renderBgms();
+      } catch (err) {
+        console.error(err);
+        statusText.textContent = "BGMを削除できませんでした。";
+      }
+    });
+
+    function updateButtonState() {
+      generateBtn.disabled = isGenerating ? isCancelling : !audioFile;
+      generateBtn.textContent = isCancelling ? "キャンセル中..." : isGenerating ? "生成をキャンセル" : "動画を生成";
+      generateBtn.classList.toggle("cancel-btn", isGenerating);
+    }
+
+    function cancelGeneration() {
+      if (!isGenerating || isCancelling) return;
+      cancelRequested = true;
+      isCancelling = true;
+      updateButtonState();
+      statusText.textContent = "動画生成をキャンセルしています...";
+      try {
+        ffmpeg?.terminate();
+        isLoaded = false;
+      } catch (err) {
+        console.error("動画生成をキャンセルできませんでした。", err);
+        cancelRequested = false;
+        isCancelling = false;
+        statusText.textContent = `動画生成をキャンセルできませんでした: ${err instanceof Error ? err.message : String(err)}`;
+        updateButtonState();
+      }
+    }
+
+    function throwIfGenerationCancelled() {
+      if (cancelRequested) throw new Error("動画生成はキャンセルされました。");
+    }
+
+    function updateDownloadFilename() {
+      const name = outputFilenameInput.value;
+      let error = "";
+      if (!name.trim()) {
+        error = "保存名を入力してください。";
+      } else if (name !== name.trim()) {
+        error = "保存名の先頭または末尾に空白があります。";
+      } else if (/[<>:"\/\\|?*\u0000-\u001f]/.test(name) || /[. ]$/.test(name)) {
+        error = "ファイル名に使えない文字、または末尾の空白・ピリオドがあります。";
+      } else if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(name.split(".")[0].replace(/[ .]+$/, ""))) {
+        error = "この名前はファイル名に使用できません。";
+      }
+
+      outputFilenameInput.setCustomValidity(error);
+      outputFilenameInput.setAttribute("aria-invalid", String(Boolean(error)));
+      filenameInputWrap.classList.toggle("invalid", Boolean(error));
+      filenameStatus.textContent = error;
+      filenameStatus.hidden = !error;
+      if (error) return null;
+
+      const filename = `${name}.mp4`;
+      downloadLink.download = filename;
+      return filename;
+    }
+
+    function notifyEncodingComplete() {
+      if (!completionNotificationEnabled) return;
+      const notificationApi = window.Notification;
+      if (!notificationApi || notificationApi.permission !== "granted") {
+        completionNotificationEnabled = false;
+        completionNotificationToggle.checked = false;
+        localStorage.removeItem(completionNotificationStorageKey);
+        completionNotificationStatus.textContent = "通知の許可がないため、完了通知を表示できませんでした。";
+        return;
+      }
+
+      try {
+        const notification = new notificationApi("エンコードが完了しました", {
+          body: `${downloadLink.download || "生成した動画"} をダウンロードできます。`,
+          tag: "podcast-video-maker-encoding-complete",
+        });
+        notification.onclick = () => {
+          window.focus();
+          previewVideo.scrollIntoView({ behavior: "smooth", block: "center" });
+        };
+      } catch (err) {
+        console.error("エンコード完了通知を表示できませんでした。", err);
+        completionNotificationStatus.textContent = "完了通知を表示できませんでした。ブラウザーの通知設定をご確認ください。";
+      }
+    }
+
+    outputFilenameInput.addEventListener("input", updateDownloadFilename);
+    downloadLink.addEventListener("click", (event) => {
+      if (updateDownloadFilename()) return;
+      event.preventDefault();
+      outputFilenameInput.focus();
+      outputFilenameInput.reportValidity();
+    });
+
+    function setAudioFile(file) {
+      if (!file) return;
+      const supportedAudio = file.type.startsWith("audio/") || /\.(m4a|mp3|wav|aac|ogg|flac)$/i.test(file.name);
+      if (!supportedAudio) {
+        statusText.textContent = "音声ファイルを選択してください。";
+        return;
+      }
+      audioFile = file;
+      selectedAudioText.textContent = `選択中: ${file.name}`;
+      const suggestedName = `【${file.name.replace(/\.[^/.]+$/, "")}】`;
+      if (!outputFilenameInput.value.trim() || outputFilenameInput.value === suggestedOutputFilename) {
+        suggestedOutputFilename = suggestedName;
+        outputFilenameInput.value = suggestedName;
+      }
+      updateDownloadFilename();
+      previewVideo.pause();
+      clearPreviewFallback();
+      showPreviewPlaceholder(
+        "音声をセットしました",
+        "素材を確認して「動画を生成」を押すと、ここにプレビューが表示されます。",
+        "準備完了",
+      );
+      statusText.textContent = "";
+      updateButtonState();
+    }
+
+    function updateDropZoneState(event, active) {
+      event.preventDefault();
+      audioDropZone.classList.toggle("drag-over", active);
+    }
+
+    async function validateImage(file) {
+      const url = URL.createObjectURL(file);
+      try {
+        const image = new Image();
+        image.src = url;
+        await image.decode();
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    async function getMediaDuration(ff, path, fileName) {
+      let duration;
+      const onLog = ({ message }) => {
+        const match = /Duration:\s*(\d+):(\d{2}):(\d+(?:\.\d+)?)/.exec(message);
+        if (match) {
+          duration = Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3]);
+        }
+      };
+      ff.on("log", onLog);
+      try {
+        await ff.exec(["-i", path]);
+      } finally {
+        ff.off("log", onLog);
+      }
+      if (!Number.isFinite(duration)) {
+        throw new Error(`${fileName}の長さをFFmpegで読み取れませんでした。ファイル形式や破損を確認してください。`);
+      }
+      return duration;
+    }
+
+    async function addAssets(files, kind) {
+      let added = 0;
+      const errors = [];
+      for (const file of files) {
+        try {
+          if (kind === "background") {
+            await validateImage(file);
+          } else {
+            const supportedAudio = file.type.startsWith("audio/") || /\.(m4a|mp3|wav|aac|ogg|flac)$/i.test(file.name);
+            if (!supportedAudio) throw new Error("音声ファイルではありません。");
+          }
+          const id = `${kind}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+          const asset = {
+            id,
+            kind,
+            label: file.name,
+            blob: file,
+            createdAt: Date.now(),
+            overlapSeconds: kind === "bgm" ? 5 : undefined,
+            openingDurationSeconds: kind === "bgm" ? 0 : undefined,
+            openingOffsetSeconds: kind === "bgm" ? 2 : undefined,
+          };
+          await storeAsset(asset);
+          if (kind === "background") {
+            asset.src = URL.createObjectURL(file);
+            asset.custom = true;
+            backgroundPresets.push(asset);
+          } else {
+            asset.custom = true;
+            bgmPresets.push(asset);
+          }
+          added++;
+        } catch (err) {
+          console.error(`素材を追加できませんでした: ${file.name}`, err);
+          errors.push(file.name);
+        }
+      }
+      backgroundPresets.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+      bgmPresets.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+      renderBackgrounds();
+      renderBgms();
+      statusText.textContent = errors.length
+        ? `${added}件追加しました。追加できなかった素材: ${errors.join("、")}`
+        : `${added}件追加しました。次回以降もこのブラウザーで使えます。`;
+    }
+
+    async function ensureFFmpegLoaded() {
+      if (isLoaded && ffmpeg) return ffmpeg;
+
+      statusText.textContent = "動画エンジン（FFmpeg）を読み込み中...";
+      const loadingFFmpeg = new FFmpeg();
+      ffmpeg = loadingFFmpeg;
+
+      loadingFFmpeg.on("progress", ({ progress }) => {
+        if (isPreparingPreviewAudio) return;
+        const normalizedProgress = Number.isFinite(progress) ? Math.min(1, Math.max(0, progress)) : 0;
+        const pct = Math.round(normalizedProgress * 100);
+        progressBar.value = pct;
+        progressText.textContent = `${pct}%`;
+        if (encodingStartedAt !== null) {
+          encodingProgress = normalizedProgress;
+          updateEncodingTime();
+        }
+      });
+
+      const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm";
+      const workerURL = URL.createObjectURL(new Blob(
+        [`import "${FFMPEG_WORKER_URL}";`],
+        { type: "text/javascript" },
+      ));
+      let coreURL;
+      let wasmURL;
+      try {
+        coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript");
+        throwIfGenerationCancelled();
+        wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm");
+        throwIfGenerationCancelled();
+        await loadingFFmpeg.load({
+          classWorkerURL: workerURL,
+          coreURL,
+          wasmURL,
+        });
+        throwIfGenerationCancelled();
+        isLoaded = true;
+        return loadingFFmpeg;
+      } catch (err) {
+        loadingFFmpeg.terminate();
+        if (ffmpeg === loadingFFmpeg) ffmpeg = null;
+        isLoaded = false;
+        throw err;
+      } finally {
+        URL.revokeObjectURL(workerURL);
+        if (coreURL) URL.revokeObjectURL(coreURL);
+        if (wasmURL) URL.revokeObjectURL(wasmURL);
+      }
+    }
+
+    async function initializeAssets() {
+      try {
+        const assets = await getStoredAssets();
+        assets.sort((a, b) => a.createdAt - b.createdAt);
+        for (const asset of assets) {
+          asset.custom = true;
+          if (asset.kind === "background") {
+            asset.src = URL.createObjectURL(asset.blob);
+            backgroundPresets.push(asset);
+          } else if (asset.kind === "bgm") {
+            if (!Number.isFinite(asset.overlapSeconds)) asset.overlapSeconds = 5;
+            if (!Number.isFinite(asset.openingDurationSeconds) || asset.openingDurationSeconds < 0) {
+              asset.openingDurationSeconds = 0;
+            }
+            if (!Number.isFinite(asset.openingOffsetSeconds) || asset.openingOffsetSeconds < 0) {
+              asset.openingOffsetSeconds = 2;
+            }
+            bgmPresets.push(asset);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        statusText.textContent = "保存済み素材を読み込めませんでした。ブラウザーの保存領域を確認してください。";
+      }
+      if (!backgroundPresets.some((bg) => bg.id === selectedBgId)) selectedBgId = "bg1";
+      if (!bgmPresets.some((bgm) => bgm.id === selectedBgmId)) selectedBgmId = "";
+      if (!bgmPresets.some((bgm) => bgm.id === selectedOpeningBgmId)) selectedOpeningBgmId = "";
+      renderBackgrounds();
+      renderBgms();
+    }
+
+    audioDropZone.addEventListener("click", () => audioInput.click());
+    audioDropZone.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        audioInput.click();
+      }
+    });
+    audioDropZone.addEventListener("dragenter", (event) => updateDropZoneState(event, true));
+    audioDropZone.addEventListener("dragover", (event) => updateDropZoneState(event, true));
+    audioDropZone.addEventListener("dragleave", (event) => updateDropZoneState(event, false));
+    audioDropZone.addEventListener("drop", (event) => {
+      updateDropZoneState(event, false);
+      setAudioFile(event.dataTransfer.files[0]);
+    });
+    audioInput.addEventListener("change", () => setAudioFile(audioInput.files[0]));
+    bgInput.addEventListener("change", async () => {
+      await addAssets(Array.from(bgInput.files), "background");
+      bgInput.value = "";
+    });
+    bgmInput.addEventListener("change", async () => {
+      await addAssets(Array.from(bgmInput.files), "bgm");
+      bgmInput.value = "";
+    });
+    document.getElementById("exportAssetsBtn").addEventListener("click", async () => {
+      try {
+        await exportAssetBackup();
+      } catch (err) {
+        console.error(err);
+        assetBackupStatus.textContent = `素材設定をエクスポートできませんでした: ${err instanceof Error ? err.message : String(err)}`;
+      }
+    });
+    const assetBackupInput = document.getElementById("assetBackupInput");
+    document.getElementById("importAssetsBtn").addEventListener("click", () => assetBackupInput.click());
+    assetBackupInput.addEventListener("change", async () => {
+      const file = assetBackupInput.files[0];
+      if (!file) return;
+      try {
+        await importAssetBackup(file);
+      } catch (err) {
+        console.error(err);
+        assetBackupStatus.textContent = `素材設定をインポートできませんでした: ${err instanceof Error ? err.message : String(err)}`;
+      } finally {
+        assetBackupInput.value = "";
+      }
+    });
+
+    generateBtn.addEventListener("click", async () => {
+      if (isGenerating) {
+        cancelGeneration();
+        return;
+      }
+      if (!audioFile) return;
+
+      isGenerating = true;
+      isCancelling = false;
+      cancelRequested = false;
+      updateButtonState();
+      previewVideo.pause();
+      clearPreviewFallback();
+      showPreviewPlaceholder("動画を生成しています", "進捗は左側に表示されます。完了するとここで再生できます。", "生成中");
+      progressArea.style.display = "block";
+      progressBar.value = 0;
+      progressText.textContent = "0%";
+      encodingTimeText.textContent = "";
+      progressArea.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      let pendingOutputUrl = null;
+      try {
+        startEncodingTimer();
+        const ff = await ensureFFmpegLoaded();
+        throwIfGenerationCancelled();
+        const selectedBg = backgroundPresets.find((bg) => bg.id === selectedBgId);
+        const selectedOpeningBgm = bgmPresets.find((bgm) => bgm.id === selectedOpeningBgmId);
+        const selectedBgm = bgmPresets.find((bgm) => bgm.id === selectedBgmId);
+        if (!selectedBg) throw new Error("背景画像が選択されていません。");
+
+        statusText.textContent = "素材ファイルを準備中...";
+        const audioExtension = audioFile.name.match(/\.[^.]+$/)?.[0] || ".m4a";
+        const voicePath = `input_voice${audioExtension}`;
+        await ff.writeFile(voicePath, await fetchFile(audioFile));
+        const voiceDuration = await getMediaDuration(ff, voicePath, audioFile.name);
+        let voiceStartTime = 0;
+        let openingBgmStartTime = 0;
+        let openingDuration = 0;
+        let outputDuration = voiceDuration;
+        let openingBgmPath = "";
+        if (selectedOpeningBgm) {
+          statusText.textContent = "オープニングBGMを準備中...";
+          const openingExtension = selectedOpeningBgm.label.match(/\.[^.]+$/)?.[0] || ".mp3";
+          openingBgmPath = `opening_bgm${openingExtension}`;
+          await ff.writeFile(openingBgmPath, await fetchFile(selectedOpeningBgm.blob));
+          const sourceDuration = await getMediaDuration(ff, openingBgmPath, selectedOpeningBgm.label);
+          if (sourceDuration <= 0) throw new Error(`${selectedOpeningBgm.label}の長さが0秒です。`);
+          const requestedDuration = Number(selectedOpeningBgm.openingDurationSeconds ?? 0);
+          if (!Number.isFinite(requestedDuration) || requestedDuration < 0) {
+            throw new Error("オープニングBGMの再生秒数は0以上にしてください。");
+          }
+          openingDuration = requestedDuration === 0 ? sourceDuration : requestedDuration;
+          const openingOffsetSeconds = Number(selectedOpeningBgm.openingOffsetSeconds ?? 2);
+          if (!Number.isFinite(openingOffsetSeconds) || openingOffsetSeconds < 0) {
+            throw new Error("オープニングBGMの開始時間差は0以上にしてください。");
+          }
+          if (openingBgmMode === "beforeVoice") {
+            voiceStartTime = openingDuration;
+          } else if (openingBgmMode === "beforeOverlap") {
+            if (openingOffsetSeconds >= openingDuration) {
+              throw new Error(`BGM先行秒（${openingOffsetSeconds}秒）はBGM再生時間（${openingDuration.toFixed(1)}秒）より短くしてください。`);
+            }
+            voiceStartTime = openingOffsetSeconds;
+          } else if (openingBgmMode === "afterOverlap") {
+            if (openingOffsetSeconds >= voiceDuration) {
+              throw new Error(`開始後秒（${openingOffsetSeconds}秒）は音声の長さ（${voiceDuration.toFixed(1)}秒）より短くしてください。`);
+            }
+            openingBgmStartTime = openingOffsetSeconds;
+          }
+          outputDuration = Math.max(
+            voiceStartTime + voiceDuration,
+            openingBgmStartTime + openingDuration,
+          );
+        }
+
+        const bgImage = new Image();
+        bgImage.src = selectedBg.src;
+        await bgImage.decode();
+        const bgCanvas = document.createElement("canvas");
+        bgCanvas.width = 1280;
+        bgCanvas.height = 720;
+        const bgContext = bgCanvas.getContext("2d");
+        if (!bgContext) throw new Error("背景画像の描画に失敗しました。");
+        const scale = Math.max(bgCanvas.width / bgImage.naturalWidth, bgCanvas.height / bgImage.naturalHeight);
+        const drawWidth = bgImage.naturalWidth * scale;
+        const drawHeight = bgImage.naturalHeight * scale;
+        bgContext.drawImage(bgImage, (bgCanvas.width - drawWidth) / 2, (bgCanvas.height - drawHeight) / 2, drawWidth, drawHeight);
+        const bgBlob = await new Promise((resolve) => bgCanvas.toBlob(resolve, "image/png"));
+        if (!bgBlob) throw new Error("背景画像をPNGに変換できませんでした。");
+        await ff.writeFile("bg.png", await fetchFile(bgBlob));
+
+        const args = [
+          "-loop", "1",
+          "-framerate", "30",
+          "-i", "bg.png",
+          "-i", voicePath,
+        ];
+        let endingBgmPath = "";
+        let endingBgmDuration = 0;
+        let endingBgmStartTime = 0;
+        if (selectedBgm) {
+          const bgmExtension = selectedBgm.label.match(/\.[^.]+$/)?.[0] || ".mp3";
+          endingBgmPath = `ending_bgm${bgmExtension}`;
+          await ff.writeFile(endingBgmPath, await fetchFile(selectedBgm.blob));
+          endingBgmDuration = await getMediaDuration(ff, endingBgmPath, selectedBgm.label);
+          const overlapSeconds = Number(selectedBgm.overlapSeconds ?? 5);
+          if (!Number.isFinite(overlapSeconds) || overlapSeconds < 0 || overlapSeconds >= voiceDuration) {
+            throw new Error(`重ねる秒数（${overlapSeconds}秒）は音声の長さ（${voiceDuration.toFixed(1)}秒）より短くしてください。`);
+          }
+          if (overlapSeconds >= endingBgmDuration) {
+            throw new Error(`重ねる秒数（${overlapSeconds}秒）はBGMの長さ（${endingBgmDuration.toFixed(1)}秒）より短くしてください。`);
+          }
+          endingBgmStartTime = voiceStartTime + voiceDuration - overlapSeconds;
+          outputDuration = Math.max(outputDuration, endingBgmStartTime + endingBgmDuration);
+        }
+        if (selectedOpeningBgm || selectedBgm) {
+          statusText.textContent = selectedOpeningBgm && selectedBgm
+            ? "オープニング・エンディングBGMと動画をエンコード中..."
+            : selectedOpeningBgm
+              ? "オープニングBGMと動画をエンコード中..."
+              : "エンディングBGMと動画をエンコード中...";
+          const audioFormat = "aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo";
+          const audioFilters = [];
+          const audioTracks = [];
+          const voiceDelayMs = Math.round(voiceStartTime * 1000);
+          audioFilters.push(
+            `[1:a]${audioFormat}${voiceDelayMs ? `,adelay=delays=${voiceDelayMs}|${voiceDelayMs}` : ""}[voice]`,
+          );
+          audioTracks.push("[voice]");
+          let nextInputIndex = 2;
+          if (selectedOpeningBgm) {
+            args.push("-stream_loop", "-1", "-i", openingBgmPath);
+            const openingDelayMs = Math.round(openingBgmStartTime * 1000);
+            audioFilters.push(
+              `[${nextInputIndex}:a]atrim=duration=${openingDuration.toFixed(3)},asetpts=PTS-STARTPTS,${audioFormat}${openingDelayMs ? `,adelay=delays=${openingDelayMs}|${openingDelayMs}` : ""}[opening]`,
+            );
+            audioTracks.push("[opening]");
+            nextInputIndex++;
+          }
+          if (selectedBgm) {
+            args.push("-i", endingBgmPath);
+            const endingDelayMs = Math.round(endingBgmStartTime * 1000);
+            audioFilters.push(
+              `[${nextInputIndex}:a]${audioFormat},adelay=delays=${endingDelayMs}|${endingDelayMs}[ending]`,
+            );
+            audioTracks.push("[ending]");
+          }
+          audioFilters.push(
+            `${audioTracks.join("")}amix=inputs=${audioTracks.length}:duration=longest:dropout_transition=0[outa]`,
+          );
+          args.push(
+            "-filter_complex",
+            audioFilters.join(";"),
+            "-map", "0:v",
+            "-map", "[outa]",
+          );
+        } else {
+          statusText.textContent = "BGMなしで動画をエンコード中...";
+          args.push("-map", "0:v", "-map", "1:a");
+        }
+        args.push(
+          "-c:v", "libx264",
+          "-preset", "veryfast",
+          "-crf", "23",
+          "-tune", "stillimage",
+          "-pix_fmt", "yuv420p",
+          "-c:a", "aac",
+          "-b:a", "192k",
+          "-shortest",
+          "-t", outputDuration.toFixed(3),
+          "output.mp4",
+        );
+        startEncodingProgress();
+        await ff.exec(args);
+        throwIfGenerationCancelled();
+        let previewAudioWarning = "";
+        if (previewVideo.canPlayType('audio/mp4; codecs="mp4a.40.2"') === "") {
+          if (previewVideo.canPlayType('video/mp4; codecs="mp4a.6B"') === "") {
+            previewCompatibilityNotice.textContent = "このブラウザーは動画内のAAC音声に対応していません。ダウンロードした動画では音声を再生できます。";
+            previewCompatibilityNotice.hidden = false;
+            previewAudioWarning = "このブラウザーではプレビュー音声を再生できません。";
+          } else {
+            statusText.textContent = "ブラウザー再生用のプレビュー動画を準備中...";
+            isPreparingPreviewAudio = true;
+            try {
+              await ff.exec([
+                "-i", "output.mp4",
+                "-map", "0:v:0",
+                "-map", "0:a:0",
+                "-c:v", "copy",
+                "-c:a", "libmp3lame",
+                "-b:a", "192k",
+                "-movflags", "+faststart",
+                "preview.mp4",
+              ]);
+              throwIfGenerationCancelled();
+              const previewData = await ff.readFile("preview.mp4");
+              throwIfGenerationCancelled();
+              previewCompatibilityUrl = URL.createObjectURL(new Blob([previewData], { type: "video/mp4" }));
+              previewCompatibilityNotice.textContent = "ブラウザーがAAC音声に対応していないため、プレビューのみMP3音声に変換しています。ダウンロードされるMP4の音声は変わりません。";
+              previewCompatibilityNotice.hidden = false;
+            } catch (err) {
+              if (cancelRequested) throw err;
+              console.error("ブラウザー再生用のプレビュー動画を準備できませんでした。", err);
+              previewCompatibilityNotice.textContent = "プレビュー音声をブラウザーで再生できませんでした。ダウンロードした動画には音声が含まれています。";
+              previewCompatibilityNotice.hidden = false;
+              previewAudioWarning = "プレビュー用音声の準備に失敗しました。ダウンロードした動画には音声が含まれています。";
+            } finally {
+              isPreparingPreviewAudio = false;
+            }
+          }
+        }
+        statusText.textContent = "出力ファイルを読み込み中...";
+        const data = await ff.readFile("output.mp4");
+        throwIfGenerationCancelled();
+        const uint8 = data instanceof Uint8Array ? data : new TextEncoder().encode(data);
+        const blob = new Blob([uint8], { type: "video/mp4" });
+        pendingOutputUrl = URL.createObjectURL(blob);
+
+        previewVideo.src = previewCompatibilityUrl || pendingOutputUrl;
+        previewVideo.hidden = false;
+        previewEmpty.hidden = true;
+        await new Promise((resolve) => {
+          if (previewVideo.readyState >= 1) {
+            resolve();
+            return;
+          }
+          const onLoadedMetadata = () => {
+            window.clearTimeout(timeoutId);
+            resolve();
+          };
+          const timeoutId = window.setTimeout(() => {
+            previewVideo.removeEventListener("loadedmetadata", onLoadedMetadata);
+            resolve();
+          }, 1500);
+          previewVideo.addEventListener("loadedmetadata", onLoadedMetadata, { once: true });
+        });
+        throwIfGenerationCancelled();
+
+        if (outputUrl) URL.revokeObjectURL(outputUrl);
+        outputUrl = pendingOutputUrl;
+        pendingOutputUrl = null;
+        downloadLink.href = outputUrl;
+        updateDownloadFilename();
+        downloadLink.hidden = false;
+        previewState.textContent = previewAudioWarning ? "確認が必要" : "完成";
+        statusText.textContent = previewAudioWarning
+          ? `動画の生成が完了しました。${previewAudioWarning}`
+          : "動画の生成が完了しました！";
+        progressBar.value = 100;
+        progressText.textContent = "100%";
+        stopEncodingTimer(true);
+        notifyEncodingComplete();
+        previewVideo.scrollIntoView({ behavior: "smooth", block: "center" });
+      } catch (err) {
+        if (cancelRequested) {
+          statusText.textContent = "動画生成をキャンセルしました。";
+          showPreviewPlaceholder("動画生成をキャンセルしました", "生成は中断されました。必要であれば、もう一度実行できます。", "キャンセル");
+          previewVideo.pause();
+          previewVideo.removeAttribute("src");
+          previewVideo.load();
+          clearPreviewFallback();
+        } else {
+          console.error(err);
+          const detail = err instanceof Error ? err.message : String(err);
+          statusText.textContent = `動画生成に失敗しました: ${detail}`;
+          showPreviewPlaceholder("動画を生成できませんでした", detail, "エラー");
+        }
+      } finally {
+        if (pendingOutputUrl) URL.revokeObjectURL(pendingOutputUrl);
+        stopEncodingTimer(false, cancelRequested);
+        if (cancelRequested) {
+          ffmpeg = null;
+          isLoaded = false;
+        }
+        isGenerating = false;
+        isCancelling = false;
+        cancelRequested = false;
+        updateButtonState();
+      }
+    });
+
+    initializeAssets();
+  </script>
+</body>
+</html>
