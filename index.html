@@ -2304,7 +2304,7 @@
             audioTracks.push("[ending]");
           }
           audioFilters.push(
-            `${audioTracks.join("")}amix=inputs=${audioTracks.length}:duration=longest:dropout_transition=0[outa]`,
+            `${audioTracks.join("")}amix=inputs=${audioTracks.length}:duration=longest:dropout_transition=0.5:normalize=1[outa]`,
           );
           args.push(
             "-filter_complex",
