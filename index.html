@@ -290,9 +290,15 @@
     .background-heading .secondary-button,
     .bgm-heading .secondary-button {
       min-height: 30px;
-      margin-left: auto;
+      margin-left: 0;
       padding: 4px 8px;
       font-size: 10px;
+    }
+    .section-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
     }
     .bgm-select-row {
       gap: 6px;
@@ -364,6 +370,113 @@
       display: flex;
       gap: 7px;
       margin-top: 7px;
+    }
+    .asset-manager-dialog {
+      width: min(560px, calc(100vw - 28px));
+      max-height: min(78vh, 680px);
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      color: var(--text);
+      background: var(--surface);
+      box-shadow: 0 24px 70px rgb(0 0 0 / 28%);
+    }
+    .asset-manager-dialog::backdrop {
+      background: rgb(5 10 20 / 55%);
+      backdrop-filter: blur(2px);
+    }
+    .asset-manager-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .asset-manager-header h2 {
+      margin: 0;
+      font-size: 15px;
+    }
+    .asset-manager-list {
+      display: grid;
+      gap: 8px;
+      max-height: min(55vh, 480px);
+      overflow-y: auto;
+      padding: 12px;
+    }
+    .asset-manager-item {
+      display: grid;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-raised);
+    }
+    .asset-manager-item.background-item {
+      grid-template-columns: 64px minmax(0, 1fr) auto;
+    }
+    .asset-manager-item.bgm-item {
+      grid-template-columns: minmax(0, 1fr) 132px auto;
+    }
+    .asset-manager-thumbnail {
+      width: 64px;
+      height: 42px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--surface);
+    }
+    .asset-manager-name,
+    .asset-manager-overlap {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+      color: var(--muted);
+      font-size: 10px;
+    }
+    .asset-manager-name input,
+    .asset-manager-overlap input {
+      width: 100%;
+      min-width: 0;
+      min-height: 32px;
+      padding: 5px 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      background: var(--surface);
+      font: inherit;
+      font-size: 11px;
+    }
+    .asset-manager-name-static {
+      overflow-wrap: anywhere;
+      color: var(--text);
+      font-size: 11px;
+    }
+    .asset-manager-default {
+      color: var(--muted);
+      font-size: 10px;
+      white-space: nowrap;
+    }
+    .asset-manager-note,
+    .asset-manager-status {
+      margin: 0;
+      padding: 0 12px 10px;
+      color: var(--muted);
+      font-size: 10px;
+      overflow-wrap: anywhere;
+    }
+    .asset-manager-status {
+      min-height: 22px;
+      font-size: 11px;
+    }
+    .asset-manager-empty {
+      margin: 0;
+      padding: 14px 8px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
     }
     .secondary-button {
       color: var(--accent-text);
@@ -821,15 +934,17 @@
         <div class="section-heading background-heading">
           <span class="step-number">02</span>
           <h2>背景画像</h2>
-          <label id="addBgBtn" class="secondary-button file-picker-button">
-            ＋ 背景を追加
-            <input id="bgInput" class="file-picker-input" type="file" accept="image/*" multiple aria-label="追加する背景画像を選択" />
-          </label>
+          <div class="section-actions">
+            <button id="editBackgroundsBtn" class="secondary-button" type="button" aria-label="背景画像リストを編集">編集</button>
+            <label id="addBgBtn" class="secondary-button file-picker-button">
+              ＋ 背景を追加
+              <input id="bgInput" class="file-picker-input" type="file" accept="image/*" multiple aria-label="追加する背景画像を選択" />
+            </label>
+          </div>
         </div>
         <div class="asset-selection">
           <img id="backgroundPreview" alt="" />
           <select id="bgList" class="asset-select" aria-label="背景画像を選択"></select>
-          <button id="removeBackgroundBtn" class="icon-button" type="button" aria-label="選択中の背景画像を削除">削除</button>
         </div>
       </section>
 
@@ -837,15 +952,17 @@
         <div class="section-heading bgm-heading">
           <span class="step-number">03</span>
           <h2>BGM設定 <span class="optional-label">任意</span></h2>
-          <label id="addBgmBtn" class="secondary-button file-picker-button">
-            ＋ BGMを追加
-            <input id="bgmInput" class="file-picker-input" type="file" accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg" multiple aria-label="追加するBGM素材を選択" />
-          </label>
+          <div class="section-actions">
+            <button id="editBgmsBtn" class="secondary-button" type="button" aria-label="BGMリストを編集">編集</button>
+            <label id="addBgmBtn" class="secondary-button file-picker-button">
+              ＋ BGMを追加
+              <input id="bgmInput" class="file-picker-input" type="file" accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg" multiple aria-label="追加するBGM素材を選択" />
+            </label>
+          </div>
         </div>
         <div class="bgm-select-row">
           <label class="bgm-row-label" for="openingBgmList">オープニング</label>
           <select id="openingBgmList" aria-label="オープニングBGMを選択"></select>
-          <button id="removeOpeningBgmBtn" class="icon-button" type="button" aria-label="選択中のオープニングBGMを削除">削除</button>
         </div>
         <div id="openingBgmSettings" class="opening-bgm-settings" hidden>
           <label for="openingBgmMode">開始位置</label>
@@ -868,7 +985,6 @@
             <input id="bgmOverlapInput" type="number" min="0" step="0.1" aria-label="エンディングBGMを音声終了の何秒前から重ねるか" />
             <span>秒前</span>
           </span>
-          <button id="removeBgmBtn" class="icon-button" type="button" aria-label="選択中のエンディングBGMを削除">削除</button>
         </div>
         <p id="openingBgmHelp" class="helper-text bgm-helper-text">再生秒数0は素材全体、長い指定はループ。背景はBGM終了まで表示されます。</p>
       </section>
@@ -934,6 +1050,16 @@
     </section>
   </main>
 
+  <dialog id="assetManagerDialog" class="asset-manager-dialog" aria-labelledby="assetManagerTitle">
+    <div class="asset-manager-header">
+      <h2 id="assetManagerTitle">素材リストを編集</h2>
+      <button id="closeAssetManagerBtn" class="icon-button" type="button">閉じる</button>
+    </div>
+    <div id="assetManagerList" class="asset-manager-list"></div>
+    <p id="assetManagerNote" class="asset-manager-note"></p>
+    <p id="assetManagerStatus" class="asset-manager-status" role="status" aria-live="polite"></p>
+  </dialog>
+
   <script type="module">
     import { FFmpeg } from "https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js";
     import { fetchFile, toBlobURL } from "https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js";
@@ -987,7 +1113,7 @@
     const bgInput = document.getElementById("bgInput");
     const bgList = document.getElementById("bgList");
     const backgroundPreview = document.getElementById("backgroundPreview");
-    const removeBackgroundBtn = document.getElementById("removeBackgroundBtn");
+    const editBackgroundsBtn = document.getElementById("editBackgroundsBtn");
     const bgmInput = document.getElementById("bgmInput");
     const bgmList = document.getElementById("bgmList");
     const openingBgmList = document.getElementById("openingBgmList");
@@ -998,8 +1124,13 @@
     const openingBgmOffsetInput = document.getElementById("openingBgmOffsetInput");
     const bgmTimingRow = document.getElementById("bgmTimingRow");
     const bgmOverlapInput = document.getElementById("bgmOverlapInput");
-    const removeBgmBtn = document.getElementById("removeBgmBtn");
-    const removeOpeningBgmBtn = document.getElementById("removeOpeningBgmBtn");
+    const editBgmsBtn = document.getElementById("editBgmsBtn");
+    const assetManagerDialog = document.getElementById("assetManagerDialog");
+    const assetManagerTitle = document.getElementById("assetManagerTitle");
+    const assetManagerList = document.getElementById("assetManagerList");
+    const assetManagerNote = document.getElementById("assetManagerNote");
+    const assetManagerStatus = document.getElementById("assetManagerStatus");
+    const closeAssetManagerBtn = document.getElementById("closeAssetManagerBtn");
     const generateBtn = document.getElementById("generateBtn");
     const completionNotificationToggle = document.getElementById("completionNotificationToggle");
     const completionNotificationStatus = document.getElementById("completionNotificationStatus");
@@ -1430,7 +1561,6 @@
       const selected = backgroundPresets.find((bg) => bg.id === selectedBgId);
       backgroundPreview.src = selected?.src || "";
       backgroundPreview.alt = selected ? `${selected.label}のプレビュー` : "";
-      removeBackgroundBtn.hidden = !selected?.custom;
     }
 
     function renderBgms() {
@@ -1467,36 +1597,170 @@
         "aria-label",
         selectedOpening ? `${selectedOpening.label}のオープニングBGM再生秒数。0は素材全体` : "オープニングBGMの再生秒数。0は素材全体",
       );
-      removeOpeningBgmBtn.hidden = !selectedOpening?.custom;
       bgmTimingRow.hidden = !selected;
       bgmOverlapInput.value = String(selected?.overlapSeconds ?? 5);
       bgmOverlapInput.setAttribute(
         "aria-label",
         selected ? `${selected.label}を音声終了の何秒前から重ねるか` : "BGMを音声終了の何秒前から重ねるか",
       );
-      removeBgmBtn.hidden = !selected;
     }
+
+    function renderAssetManager(kind) {
+      const assets = kind === "background" ? backgroundPresets : bgmPresets;
+      assetManagerTitle.textContent = kind === "background" ? "背景画像リストの編集" : "BGMリストの編集";
+      assetManagerNote.textContent = kind === "background"
+        ? "標準プリセットは削除できません。追加した背景画像はここから削除できます。"
+        : "重ねる秒数はBGMごとに保存されます。削除するとオープニング／エンディング両方のリストから外れます。";
+      assetManagerList.replaceChildren();
+
+      if (!assets.length) {
+        const emptyMessage = document.createElement("p");
+        emptyMessage.className = "asset-manager-empty";
+        emptyMessage.textContent = kind === "background" ? "背景画像がありません。" : "BGMがありません。";
+        assetManagerList.appendChild(emptyMessage);
+        return;
+      }
+
+      for (const asset of assets) {
+        const row = document.createElement("div");
+        row.className = `asset-manager-item ${kind === "background" ? "background-item" : "bgm-item"}`;
+
+        if (kind === "background") {
+          const thumbnail = document.createElement("img");
+          thumbnail.className = "asset-manager-thumbnail";
+          thumbnail.src = asset.src;
+          thumbnail.alt = `${asset.label}のプレビュー`;
+          row.appendChild(thumbnail);
+
+          const label = document.createElement("span");
+          label.className = "asset-manager-name-static";
+          label.textContent = asset.label;
+          row.appendChild(label);
+        } else {
+          const label = document.createElement("span");
+          label.className = "asset-manager-name-static";
+          label.textContent = asset.label;
+          row.appendChild(label);
+
+          const overlapField = document.createElement("label");
+          overlapField.className = "asset-manager-overlap";
+          overlapField.textContent = "音声終了の何秒前から";
+          const overlapInput = document.createElement("input");
+          overlapInput.type = "number";
+          overlapInput.min = "0";
+          overlapInput.step = "0.1";
+          overlapInput.value = String(asset.overlapSeconds ?? 5);
+          overlapInput.setAttribute("aria-label", `${asset.label}を音声終了の何秒前から重ねるか`);
+          overlapInput.addEventListener("change", () => {
+            saveBgmOverlap(asset, overlapInput, (message) => {
+              assetManagerStatus.textContent = message;
+            });
+          });
+          overlapField.appendChild(overlapInput);
+          row.appendChild(overlapField);
+        }
+
+        if (asset.custom) {
+          const deleteButton = document.createElement("button");
+          deleteButton.className = "icon-button";
+          deleteButton.type = "button";
+          deleteButton.textContent = "削除";
+          deleteButton.setAttribute("aria-label", `${asset.label}を削除`);
+          deleteButton.addEventListener("click", async () => {
+            try {
+              if (!await deleteAsset(asset)) return;
+              renderAssetManager(kind);
+              assetManagerStatus.textContent = `${asset.label}を削除しました。`;
+              statusText.textContent = `${asset.label}を削除しました。`;
+            } catch (err) {
+              console.error(`${asset.label}を削除できませんでした。`, err);
+              assetManagerStatus.textContent = `${asset.label}を削除できませんでした。`;
+              statusText.textContent = `${asset.label}を削除できませんでした。`;
+            }
+          });
+          row.appendChild(deleteButton);
+        } else {
+          const defaultLabel = document.createElement("span");
+          defaultLabel.className = "asset-manager-default";
+          defaultLabel.textContent = "標準";
+          row.appendChild(defaultLabel);
+        }
+
+        assetManagerList.appendChild(row);
+      }
+    }
+
+    function openAssetManager(kind) {
+      renderAssetManager(kind);
+      assetManagerStatus.textContent = "";
+      assetManagerDialog.showModal();
+    }
+
+    async function saveBgmOverlap(asset, input, reportStatus) {
+      const value = input.valueAsNumber;
+      const previousValue = asset.overlapSeconds ?? 5;
+      if (!Number.isFinite(value) || value < 0) {
+        input.value = String(previousValue);
+        reportStatus("重ねる秒数は0以上の数値を入力してください。");
+        return;
+      }
+      if (value === previousValue) return;
+
+      asset.overlapSeconds = value;
+      try {
+        await storeAsset(asset);
+        if (selectedBgmId === asset.id) bgmOverlapInput.value = String(value);
+        reportStatus(`${asset.label}の重ね時間を保存しました。`);
+      } catch (err) {
+        console.error(`${asset.label}の重ね時間を保存できませんでした。`, err);
+        asset.overlapSeconds = previousValue;
+        input.value = String(previousValue);
+        reportStatus("BGMの重ね時間を保存できませんでした。");
+      }
+    }
+
+    async function deleteAsset(asset) {
+      if (!asset?.custom) return false;
+      if (asset.kind !== "background" && asset.kind !== "bgm") {
+        throw new Error("削除対象の素材種別が不正です。");
+      }
+      const assets = asset.kind === "background" ? backgroundPresets : bgmPresets;
+      if (!assets.includes(asset)) return false;
+      await deleteStoredAsset(asset.id);
+      const assetIndex = assets.indexOf(asset);
+      if (assetIndex < 0) return false;
+      assets.splice(assetIndex, 1);
+
+      if (asset.kind === "background") {
+        URL.revokeObjectURL(asset.src);
+        if (selectedBgId === asset.id) {
+          selectedBgId = "bg1";
+          localStorage.setItem("selectedBackgroundId", selectedBgId);
+        }
+      } else if (asset.kind === "bgm") {
+        if (selectedBgmId === asset.id) {
+          selectedBgmId = "";
+          localStorage.setItem("selectedBgmId", selectedBgmId);
+        }
+        if (selectedOpeningBgmId === asset.id) {
+          selectedOpeningBgmId = "";
+          localStorage.setItem("selectedOpeningBgmId", selectedOpeningBgmId);
+        }
+      }
+
+      renderBackgrounds();
+      renderBgms();
+      return true;
+    }
+
+    editBackgroundsBtn.addEventListener("click", () => openAssetManager("background"));
+    editBgmsBtn.addEventListener("click", () => openAssetManager("bgm"));
+    closeAssetManagerBtn.addEventListener("click", () => assetManagerDialog.close());
 
     bgList.addEventListener("change", () => {
       selectedBgId = bgList.value;
       localStorage.setItem("selectedBackgroundId", selectedBgId);
       renderBackgrounds();
-    });
-
-    removeBackgroundBtn.addEventListener("click", async () => {
-      const selected = backgroundPresets.find((bg) => bg.id === selectedBgId);
-      if (!selected?.custom) return;
-      try {
-        await deleteStoredAsset(selected.id);
-        URL.revokeObjectURL(selected.src);
-        backgroundPresets.splice(backgroundPresets.indexOf(selected), 1);
-        selectedBgId = "bg1";
-        localStorage.setItem("selectedBackgroundId", selectedBgId);
-        renderBackgrounds();
-      } catch (err) {
-        console.error(err);
-        statusText.textContent = "背景画像を削除できませんでした。";
-      }
     });
 
     bgmList.addEventListener("change", () => {
@@ -1564,61 +1828,9 @@
     bgmOverlapInput.addEventListener("change", async () => {
       const selected = bgmPresets.find((bgm) => bgm.id === selectedBgmId);
       if (!selected) return;
-      const value = bgmOverlapInput.valueAsNumber;
-      if (!Number.isFinite(value) || value < 0) {
-        bgmOverlapInput.value = String(selected.overlapSeconds ?? 5);
-        statusText.textContent = "重ねる秒数は0以上の数値を入力してください。";
-        return;
-      }
-      const previousValue = selected.overlapSeconds;
-      selected.overlapSeconds = value;
-      try {
-        await storeAsset(selected);
-        statusText.textContent = `${selected.label}の開始タイミングを保存しました。`;
-      } catch (err) {
-        console.error(err);
-        selected.overlapSeconds = previousValue;
-        bgmOverlapInput.value = String(previousValue);
-        statusText.textContent = "BGMの開始タイミングを保存できませんでした。";
-      }
-    });
-
-    removeOpeningBgmBtn.addEventListener("click", async () => {
-      const selected = bgmPresets.find((bgm) => bgm.id === selectedOpeningBgmId);
-      if (!selected?.custom) return;
-      try {
-        await deleteStoredAsset(selected.id);
-        bgmPresets.splice(bgmPresets.indexOf(selected), 1);
-        if (selectedBgmId === selected.id) {
-          selectedBgmId = "";
-          localStorage.setItem("selectedBgmId", selectedBgmId);
-        }
-        selectedOpeningBgmId = "";
-        localStorage.setItem("selectedOpeningBgmId", selectedOpeningBgmId);
-        renderBgms();
-      } catch (err) {
-        console.error(err);
-        statusText.textContent = "オープニングBGMを削除できませんでした。";
-      }
-    });
-
-    removeBgmBtn.addEventListener("click", async () => {
-      const selected = bgmPresets.find((bgm) => bgm.id === selectedBgmId);
-      if (!selected) return;
-      try {
-        await deleteStoredAsset(selected.id);
-        bgmPresets.splice(bgmPresets.indexOf(selected), 1);
-        if (selectedOpeningBgmId === selected.id) {
-          selectedOpeningBgmId = "";
-          localStorage.setItem("selectedOpeningBgmId", selectedOpeningBgmId);
-        }
-        selectedBgmId = "";
-        localStorage.setItem("selectedBgmId", selectedBgmId);
-        renderBgms();
-      } catch (err) {
-        console.error(err);
-        statusText.textContent = "BGMを削除できませんでした。";
-      }
+      await saveBgmOverlap(selected, bgmOverlapInput, (message) => {
+        statusText.textContent = message;
+      });
     });
 
     function updateButtonState() {
