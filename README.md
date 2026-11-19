@@ -174,13 +174,7 @@ BGMが音声より長い場合は、音声が終わった後もBGMが続きま�
 ```text
 .
 ├── index.html
-├── README.md
-├── site-icon-500x500.png
-├── Podcastサムネイル4　【編集Ⅰ】.png
-├── Podcastサムネイル4【編集Ⅱ】.png
-├── Podcastサムネイル4【クラウド活用】.png
-├── ふりかえりラジオ_エンディング.mp3
-└── ふりかえりラジオ_エンディング.wav
+└── README.md
 ```
 
 - `index.html`：アプリ本体。HTML、CSS、JavaScriptを含む単一ページです。
